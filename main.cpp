@@ -14,6 +14,10 @@ const std::string PID_FILE = "/tmp/tadkir.pid";
 std::string GLOBAL_CONFIG_PATH;
 
 std::string get_default_path() {
+    const char* snap_data = getenv("SNAP_USER_DATA");
+    if (snap_data != nullptr) {
+        return std::string(snap_data) + "/tadkir.conf";
+    }
     const char *homedir = getenv("HOME");
     if (homedir == nullptr) homedir = getpwuid(getuid())->pw_dir;
     return std::string(homedir) + "/Documents/tadkir.conf";
@@ -94,17 +98,32 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        std::ifstream check_conf(GLOBAL_CONFIG_PATH);
-        if (!check_conf.is_open()) {
-            std::string input_time;
-            std::cout << "Config not found at: " << GLOBAL_CONFIG_PATH << std::endl;
-            std::cout << "Enter interval in seconds (default 200): ";
-            std::getline(std::cin, input_time);
-            
-            std::ofstream conf(GLOBAL_CONFIG_PATH);
-            conf << (input_time.empty() ? "200" : input_time) << "\nسبحان الله\nالحمد لله\nلا إله إلا الله\nالله أكبر";
-            conf.close();
+        std::string input_time;
+        std::cout << "Enter interval in seconds (default 200): ";
+        std::getline(std::cin, input_time);
+        std::string final_time = (input_time.empty() ? "200" : input_time);
+
+        std::vector<std::string> existing_messages;
+        std::ifstream reader(GLOBAL_CONFIG_PATH);
+        if (reader.is_open()) {
+            std::string line;
+            std::getline(reader, line); 
+            while (std::getline(reader, line)) {
+                if (!line.empty()) existing_messages.push_back(line);
+            }
+            reader.close();
         }
+
+        if (existing_messages.empty()) {
+            existing_messages = {"سبحان الله", "الحمد لله", "لا إله إلا الله", "الله أكبر"};
+        }
+
+        std::ofstream conf(GLOBAL_CONFIG_PATH);
+        conf << final_time << "\n";
+        for (const auto& msg : existing_messages) {
+            conf << msg << "\n";
+        }
+        conf.close();
 
         daemonize();
     } else {
@@ -136,7 +155,7 @@ int main(int argc, char* argv[]) {
 
         std::string random_msg = messages[rand() % messages.size()];
 
-        NotifyNotification *n = notify_notification_new("سبح", random_msg.c_str(), "dialog-information");
+        NotifyNotification *n = notify_notification_new("Tadkir", random_msg.c_str(), "dialog-information");
         notify_notification_set_urgency(n, NOTIFY_URGENCY_CRITICAL);
         notify_notification_show(n, nullptr);
         g_object_unref(G_OBJECT(n));
