@@ -1,0 +1,31 @@
+name: tadkir
+base: core22
+version: '1.0.1'
+summary: Periodic Thikr notifications (تطبيق تذكير)
+description: |
+  Tadkir is a simple daemon that sends periodic notifications to remind 
+  the user of Tasbih. برنامج بسيط لإرسال تنبيهات دورية بالأذكار.
+
+grade: stable
+confinement: strict
+
+parts:
+  tadkir:
+    plugin: nil
+    source: .
+    build-packages:
+      - g++
+      - libnotify-dev
+      - libglib2.0-dev
+      - pkg-config
+    stage-packages:
+      - libnotify4
+      - libglib2.0-0
+    override-build: |
+      g++ main.cpp -o tadkir $(pkg-config --cflags --libs libnotify)
+      install -D tadkir $SNAPCRAFT_PART_INSTALL/bin/tadkir
+
+apps:
+  tadkir:
+    command: bin/Tadkir
+    plugs: [desktop, desktop-legacy, x11, wayland]
