@@ -17,13 +17,16 @@ parts:
       - g++
       - libnotify-dev
       - libglib2.0-dev
+      - libgtk-3-dev
       - pkg-config
     stage-packages:
       - libnotify4
       - libglib2.0-0
+      - libgtk-3-0
     override-build: |
       g++ main.cpp -o tadkir $(pkg-config --cflags --libs libnotify)
       install -D tadkir $SNAPCRAFT_PART_INSTALL/bin/tadkir
+      
 
 apps:
   tadkir:
